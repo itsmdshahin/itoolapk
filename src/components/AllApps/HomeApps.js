@@ -16,7 +16,7 @@ const openDownloadLink = (downloadUrl) => {
 };
 
 const AppIcon = ({ name, image, downloadUrl }) => {
-  const formattedName = name.split(' ').slice(0, 4).join(' ');
+  const formattedName = name.split(' ').slice(0, 4).join(' '); // Limiting to first 4 words
 
   return (
     <View style={styles.appCard}>
@@ -29,39 +29,28 @@ const AppIcon = ({ name, image, downloadUrl }) => {
   );
 };
 
-const AllApps = () => {
+const HomeApps = () => {
   const [apps, setApps] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [isLastPage, setIsLastPage] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchApps(page);
-  }, [page]);
-
-  const fetchApps = async (currentPage) => {
-    if (loading) return;
-    setLoading(true);
-
-    try {
-      const response = await axios.get(`https://itoolapk.com/wp-json/wp/v2/posts?per_page=9&page=${currentPage}`);
-      if (response.data.length > 0) {
-        setApps(prevApps => [...prevApps, ...response.data]);
-      } else {
-        setIsLastPage(true); // No more data to load
+    const fetchApps = async () => {
+      try {
+        const response = await axios.get('https://itoolapk.com/wp-json/wp/v2/posts?per_page=9');
+        setApps(response.data);
+      } catch (error) {
+        console.error('Error fetching data: ', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching data: ', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const handleLoadMore = () => {
-    if (!isLastPage) {
-      setPage(prevPage => prevPage + 1);
-    }
-  };
+    fetchApps();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator style={styles.loader} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -76,25 +65,17 @@ const AllApps = () => {
         )}
         numColumns={3}
         keyExtractor={(item) => item.id.toString()}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={loading && <ActivityIndicator size="large" />}
       />
-      {isLastPage && <Text style={styles.endOfListText}>No more apps to load.</Text>}
     </View>
   );
 };
 
-export default AllApps;
+export default HomeApps;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  endOfListText: {
-    padding: 10,
-    textAlign: 'center',
   },
   loader: {
     marginTop: 50,
